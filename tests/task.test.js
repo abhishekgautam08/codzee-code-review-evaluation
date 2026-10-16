@@ -117,4 +117,68 @@ describe('Task Endpoints', () => {
 
     expect(getRes.status).toBe(404);
   });
+
+  describe('Task Assignment and Comments', () => {
+    let colleagueToken;
+    let colleagueId;
+    let taskId;
+
+    beforeEach(async () => {
+      const colleagueRes = await request(app)
+        .post('/api/auth/register')
+        .send({
+          name: 'Charlie Davis',
+          email: 'charlie@example.com',
+          password: 'password123'
+        });
+      colleagueToken = colleagueRes.body.data.token;
+      colleagueId = colleagueRes.body.data.user.id;
+
+      const taskRes = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          title: 'Review pull request bugs',
+          description: 'Check for planted defects'
+        });
+      taskId = taskRes.body.data.task._id;
+    });
+
+    it('should assign a task to another team member', async () => {
+      const res = await request(app)
+        .patch(`/api/tasks/${taskId}/assign`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ assigneeId: colleagueId });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data.task.assignee).toBe(colleagueId);
+    });
+
+    it('should add a comment to a task', async () => {
+      const res = await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Authorization', `Bearer ${colleagueToken}`)
+        .send({ content: 'I am investigating this issue now.' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.data.comment.content).toBe('I am investigating this issue now.');
+    });
+
+    it('should list comments for a task', async () => {
+      await request(app)
+        .post(`/api/tasks/${taskId}/comments`)
+        .set('Authorization', `Bearer ${colleagueToken}`)
+        .send({ content: 'First note' });
+
+      const res = await request(app)
+        .get(`/api/tasks/${taskId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.results).toBe(1);
+    });
+  });
 });

@@ -11,7 +11,13 @@ const verifyToken = (token) => {
   return jwt.verify(token, secret);
 };
 
+const verifyCommentToken = (token) => {
+  const secret = process.env.COMMENT_TOKEN_SECRET || 'taskflow_comment_secret_fallback';
+  return jwt.verify(token, secret);
+};
+
 module.exports = {
   signToken,
-  verifyToken
+  verifyToken,
+  verifyCommentToken
 };

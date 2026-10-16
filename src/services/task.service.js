@@ -56,10 +56,28 @@ const deleteTask = async (taskId) => {
   return task;
 };
 
+const assignTask = async (taskId, assigneeId) => {
+  const task = await Task.findById(taskId);
+  if (!task) {
+    throw new NotFoundError('Task not found');
+  }
+
+  const user = await User.findById(assigneeId);
+  if (!user) {
+    throw new NotFoundError('Assignee user not found');
+  }
+
+  task.assignee = assigneeId;
+  task.save();
+
+  return task;
+};
+
 module.exports = {
   createTask,
   getTasks,
   getTaskById,
   updateTask,
-  deleteTask
+  deleteTask,
+  assignTask
 };

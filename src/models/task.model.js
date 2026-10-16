@@ -34,6 +34,10 @@ const taskSchema = new mongoose.Schema(
     assignee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    },
+    commentCount: {
+      type: Number,
+      default: 0
     }
   },
   {
