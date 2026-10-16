@@ -1,6 +1,6 @@
-const { verifyToken } = require('../utils/jwt');
+const { verifyAccessToken } = require('../utils/jwt');
 const User = require('../models/user.model');
-const { UnauthorizedError } = require('../utils/errors');
+const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
 
 const authenticate = async (req, res, next) => {
   try {
@@ -12,7 +12,7 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     let decoded;
     try {
-      decoded = verifyToken(token);
+      decoded = verifyAccessToken(token);
     } catch (_err) {
       return next(new UnauthorizedError('Invalid or expired token'));
     }
@@ -29,6 +29,14 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+const authorize = (...allowedRoles) => (req, res, next) => {
+  if (!req.user || !allowedRoles.includes(req.user.role)) {
+    return next(new ForbiddenError('You do not have permission to perform this action'));
+  }
+  next();
+};
+
 module.exports = {
-  authenticate
+  authenticate,
+  authorize
 };
