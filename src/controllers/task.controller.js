@@ -78,10 +78,24 @@ const deleteTask = async (req, res, next) => {
   }
 };
 
+const assignTask = async (req, res, next) => {
+  try {
+    const { assigneeId } = req.body;
+    const task = await taskService.assignTask(req.params.id, assigneeId);
+    res.status(200).json({
+      status: 'success',
+      data: { task }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createTask,
   getTasks,
   getTaskById,
   updateTask,
-  deleteTask
+  deleteTask,
+  assignTask
 };
