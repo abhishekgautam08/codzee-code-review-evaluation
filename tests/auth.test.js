@@ -27,7 +27,7 @@ describe('Auth Endpoints', () => {
       .post('/api/auth/register')
       .send(testUser);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(res.body.status).toBe('fail');
   });
 
