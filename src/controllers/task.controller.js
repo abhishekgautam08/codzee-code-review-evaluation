@@ -23,10 +23,11 @@ const createTask = async (req, res, next) => {
 
 const getTasks = async (req, res, next) => {
   try {
-    const tasks = await taskService.getTasks();
+    const { tasks, pagination } = await taskService.getTasks(req.query);
     res.status(200).json({
       status: 'success',
       results: tasks.length,
+      pagination,
       data: { tasks }
     });
   } catch (error) {
