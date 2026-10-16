@@ -117,4 +117,80 @@ describe('Task Endpoints', () => {
 
     expect(getRes.status).toBe(404);
   });
+
+  describe('Pagination, Filtering, Search, and Sorting', () => {
+    beforeEach(async () => {
+      const sampleTasks = [
+        { title: 'Alpha task', description: 'Setup database schema', priority: 'high', status: 'pending' },
+        { title: 'Beta task', description: 'Configure redis cache', priority: 'medium', status: 'in-progress' },
+        { title: 'Gamma task', description: 'Implement JWT refresh rotation', priority: 'urgent', status: 'completed' },
+        { title: 'Delta task', description: 'Review security audit logs', priority: 'low', status: 'pending' },
+        { title: 'Epsilon task', description: 'Database performance index tuning', priority: 'urgent', status: 'in-progress' }
+      ];
+
+      for (const t of sampleTasks) {
+        await request(app)
+          .post('/api/tasks')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(t);
+      }
+    });
+
+    it('should paginate tasks with limit and page params', async () => {
+      const res = await request(app)
+        .get('/api/tasks?page=1&limit=2')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.results).toBe(2);
+      expect(res.body.pagination).toBeDefined();
+      expect(res.body.pagination.total).toBe(5);
+      expect(res.body.pagination.page).toBe(1);
+      expect(res.body.pagination.limit).toBe(2);
+      expect(res.body.pagination.totalPages).toBe(3);
+    });
+
+    it('should filter tasks by status', async () => {
+      const res = await request(app)
+        .get('/api/tasks?status=pending')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.results).toBe(2);
+      res.body.data.tasks.forEach((t) => {
+        expect(t.status).toBe('pending');
+      });
+    });
+
+    it('should filter tasks by priority', async () => {
+      const res = await request(app)
+        .get('/api/tasks?priority=urgent')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.results).toBe(2);
+      res.body.data.tasks.forEach((t) => {
+        expect(t.priority).toBe('urgent');
+      });
+    });
+
+    it('should search tasks by keyword in title and description', async () => {
+      const res = await request(app)
+        .get('/api/tasks?search=Database')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.results).toBe(2);
+    });
+
+    it('should reject invalid query parameters', async () => {
+      const res = await request(app)
+        .get('/api/tasks?status=invalid_status')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.status).toBe('fail');
+      expect(res.body.message).toContain('Invalid status filter');
+    });
+  });
 });

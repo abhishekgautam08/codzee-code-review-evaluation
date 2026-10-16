@@ -3,12 +3,14 @@ const router = express.Router();
 const taskController = require('../controllers/task.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
+const { validateTaskQuery } = require('../middleware/query.validator');
+
 router.use(authenticate);
 
 router
   .route('/')
   .post(taskController.createTask)
-  .get(taskController.getTasks);
+  .get(validateTaskQuery, taskController.getTasks);
 
 router
   .route('/:id')

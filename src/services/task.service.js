@@ -6,8 +6,42 @@ const createTask = async (taskData) => {
   return await Task.create(taskData);
 };
 
-const getTasks = async (filter = {}) => {
-  const tasks = await Task.find(filter).sort({ createdAt: -1 });
+const getTasks = async (queryParams = {}) => {
+  const {
+    page = 1,
+    limit = 10,
+    sort = '-createdAt',
+    status,
+    priority,
+    search
+  } = queryParams;
+
+  const filter = {};
+
+  if (status) {
+    filter.status = status;
+  }
+
+  if (priority) {
+    filter.priority = priority;
+  }
+
+  if (search) {
+    filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
+
+  const total = await Task.countDocuments(filter);
+  const tasks = await Task.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limitNum);
 
   // Ordinary implementation: fetches creator profile for each task (N+1 query pattern)
   const tasksWithCreator = await Promise.all(
@@ -21,7 +55,15 @@ const getTasks = async (filter = {}) => {
     })
   );
 
-  return tasksWithCreator;
+  return {
+    tasks: tasksWithCreator,
+    pagination: {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };
 
 const getTaskById = async (taskId) => {
