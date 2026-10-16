@@ -1,0 +1,6 @@
+node_modules/
+.env
+NOTES.local.md
+coverage/
+*.log
+.DS_Store
